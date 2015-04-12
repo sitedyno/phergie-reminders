@@ -31,12 +31,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Sitedyno\\\\Phergie\\\\Plugin\\\\Reminders\\": "src"
+            "Sitedyno\\Phergie\\Plugin\\Reminders\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Sitedyno\\\\Phergie\\\\Tests\\\\Plugin\\\\Reminders\\": "tests"
+            "Sitedyno\\Phergie\\Tests\\Plugin\\Reminders\\": "tests"
         }
     },
     "extra": {

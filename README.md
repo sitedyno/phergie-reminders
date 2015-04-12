@@ -25,12 +25,17 @@ See Phergie documentation for more information on
 
 ## Configuration
 
+Configuration is optional.
+
 ```php
 return [
     'plugins' => [
         // configuration
-        new \Sitedyno\\Phergie\\Plugin\\Reminders\Plugin([
-
+        new \Sitedyno\Phergie\Plugin\Reminders\Plugin([
+            'cachePath' => '/home/coolperson/phergie', // path to the reminder cache
+            'cacheFile' => '.phergie-reminders', '' file name of the reminder cache file
+            'forcePMs' => true, // If true the plugin responds in private message only
+            'maxListSize' => 5, // If a user has a list of reminders larger than this value, the repsonse  will be in private message
         ])
     ]
 ];
