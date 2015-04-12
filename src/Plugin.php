@@ -174,6 +174,10 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             'Usage: reminder cancel [name]',
             '[name] - The name of a running reminder',
             'Cancels a running reminder',
+            '------------------------------------------------------------------',
+            'Usage: reminder show [name]',
+            '[name] - The name of an existing reminder.',
+            'Show the details of a reminder',
             '------------------------------------------------------------------'
         ];
         $nick = $event->getNick();
@@ -212,6 +216,9 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
                 break;
             case "cancel":
                 $this->cancelReminder($event, $queue);
+                break;
+            case "show":
+                $this->showReminder($event, $queue);
                 break;
             default:
                 extract($this->parseReminder($event));
@@ -470,6 +477,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     {
         extract($this->parseReminder($event));
         if (isset($this->reminders[$nick][$name])) {
+            extract($this->reminders[$nick][$name]);
             $queue->$command(
                 $source,
                 "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds"
