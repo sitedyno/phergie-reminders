@@ -30,12 +30,23 @@ Configuration is optional.
 ```php
 return [
     'plugins' => [
+        // dependencies
+        new \Phergie\Irc\Plugin\React\Command\Plugin,
+
+        // optional dependencies
+        new \Phergie\Irc\Plugin\React\CommandHelp\Plugin,
+
         // configuration
         new \Sitedyno\Phergie\Plugin\Reminders\Plugin([
-            'cachePath' => '/home/coolperson/phergie', // path to the reminder cache
-            'cacheFile' => '.phergie-reminders', '' file name of the reminder cache file
-            'forcePMs' => true, // If true the plugin responds in private message only
-            'maxListSize' => 5, // If a user has a list of reminders larger than this value, the repsonse  will be in private message
+            // path to the reminder cache
+            'cachePath' => '/home/coolperson/phergie',
+            // file name of the reminder cache file
+            'cacheFile' => '.phergie-reminders',
+            // If true the plugin responds in private message only
+            'forcePMs' => true,
+            // If a user has a list of reminders larger than this value
+            // the repsonse  will be in private message
+            'maxListSize' => 5,
         ])
     ]
 ];
