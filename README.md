@@ -34,7 +34,13 @@ return [
         new \Phergie\Irc\Plugin\React\Command\Plugin,
 
         // optional dependencies
-        new \Phergie\Irc\Plugin\React\CommandHelp\Plugin,
+        new \Phergie\Irc\Plugin\React\CommandHelp\Plugin([
+            // List of plugins that subscribe to command events
+            // Used to return a list of available commands to users
+            'plugins' => [
+                new \Sitedyno\Phergie\Plugin\Reminders\Plugin,
+            ]
+        ]),
 
         // configuration
         new \Sitedyno\Phergie\Plugin\Reminders\Plugin([
@@ -51,6 +57,7 @@ return [
     ]
 ];
 ```
+For more info about dependency configuration see [Command Plugin](https://github.com/phergie/phergie-irc-plugin-react-command) and [Command Help Plugin](https://github.com/phergie/phergie-irc-plugin-react-commandhelp)
 
 ## Tests
 
