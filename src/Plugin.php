@@ -314,9 +314,11 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     public function addReminder(Event $event, Queue $queue)
     {
         extract($this->parseReminder($event));
-        $now = new DateTime();
-        $then = new DateTime($time);
-        $diff = $now->diff($then);
+        if (!$diff = $this->parseTimePhrase($time)) {
+            $queue->$command($source, "$nick: Failed to parse '$time' into a time interval.");
+            $queue->$command($source, "$nick: Try something like '15 minutes' etc...");
+            return;
+        }
         try {
             $seconds = $this->toSeconds($diff);
         } catch (Exception $e) {
@@ -416,6 +418,23 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     }
 
     /**
+     * Attempt to convert a string into a time interval.
+     *
+     * @param string $time The time string
+     * @return DateInterval|false The date interval or false if the time could not be parsed
+     */
+    protected function parseTimePhrase($time)
+    {
+        $now = new DateTime();
+        try {
+            $then = new DateTime($time);
+        } catch (Exception $e) {
+            return false;
+        }
+        return $diff = $now->diff($then);
+    }
+
+    /**
      * Edit a reminder
      *
      * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
@@ -424,9 +443,11 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     public function editReminder(Event $event, Queue $queue)
     {
         extract($this->parseReminder($event));
-        $now = new DateTime();
-        $then = new DateTime($time);
-        $diff = $now->diff($then);
+        if (!$diff = $this->parseTimePhrase($time)) {
+            $queue->$command($source, "$nick: Failed to parse '$time' into a time interval.");
+            $queue->$command($source, "$nick: Try something like '15 minutes' etc...");
+            return;
+        }
         try {
             $seconds = $this->toSeconds($diff);
         } catch (Exception $e) {
