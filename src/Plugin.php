@@ -172,6 +172,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             'Start a reminder',
             '------------------------------------------------------------------',
             'Usage: reminder cancel [name]',
+            'Usage: reminder stop [name]',
             '[name] - The name of a running reminder',
             'Cancels a running reminder',
             '------------------------------------------------------------------',
@@ -214,7 +215,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             case "start":
                 $this->startReminder($event, $queue);
                 break;
-            case "cancel":
+            case "cancel" || "stop":
                 $this->cancelReminder($event, $queue);
                 break;
             case "show":
