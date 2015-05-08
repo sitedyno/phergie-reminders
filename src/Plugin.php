@@ -215,7 +215,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             case "start":
                 $this->startReminder($event, $queue);
                 break;
-            case "cancel" || "stop":
+            case $method === "cancel" || $method === "stop":
                 $this->cancelReminder($event, $queue);
                 break;
             case "show":
