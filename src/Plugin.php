@@ -360,10 +360,13 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             if (isset($this->reminders[$nick][$name])) {
                 $reminder = $this->reminders[$nick][$name];
             } else {
+                $source = $event->getSource();
                 $queue->$command($source, "Reminder $name not found");
                 return;
             }
         }
+        $source = $event->getSource();
+        $reminder['source'] = $source;
         $self = $this;
         $this->activeTimers[$nick][$name] = $this->loop->addTimer($reminder['seconds'], function () use ($self, $queue, $reminder) {
             $self->sendReminder($queue, $reminder);
@@ -500,6 +503,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
         extract($this->parseReminder($event));
         if (isset($this->reminders[$nick][$name])) {
             extract($this->reminders[$nick][$name]);
+            $source = $event->getSource();
             $queue->$command(
                 $source,
                 "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds"
