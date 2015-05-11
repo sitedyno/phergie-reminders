@@ -35,9 +35,28 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * Stuff
+     * Test that reminder() calls the correct functions.
      */
-    public function testStuff()
+    public function testFunctionReminder()
     {
+        $plugin = Phake::mock('\Sitedyno\Phergie\Plugin\Reminders\Plugin');
+        $event = Phake::mock('\Phergie\Irc\Plugin\React\Command\CommandEvent');
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $commands = ['add', 'edit', 'delete', 'cancel', 'show'];
+        Phake::when($plugin)->reminder($event, $queue)->thenCallParent();
+
+        foreach($commands as $command) {
+            Phake::when($event)->getCustomParams()->thenReturn([$command]);
+            $plugin->reminder($event, $queue);
+            Phake::verify($plugin)->{$command . 'Reminder'}($event, $queue);
+        }
+
+        Phake::when($event)->getCustomParams()->thenReturn(['list']);
+        $plugin->reminder($event, $queue);
+        Phake::verify($plugin)->listReminders($event, $queue);
+
+        Phake::when($event)->getCustomParams()->thenReturn(['stop']);
+        $plugin->reminder($event, $queue);
+        Phake::verify($plugin, Phake::times(2))->cancelReminder($event, $queue);
     }
 }
