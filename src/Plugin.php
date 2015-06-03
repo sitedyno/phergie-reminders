@@ -391,7 +391,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     }
 
     /**
-     * Send a reminder  when time is up
+     * Send a reminder when time is up
      *
      * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
      * @param array $reminder
@@ -400,9 +400,10 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     {
         extract($reminder);
         if (!isset($message)) {
-            $message = "$nick This is me reminding you about $name";
+            $message = "$nick: This is me reminding you about $name";
         }
         $queue->$command($source, $message);
+        unset($this->activeTimers[$nick][$name]);
     }
 
     /**
