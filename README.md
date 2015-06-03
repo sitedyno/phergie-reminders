@@ -1,6 +1,6 @@
 # sitedyno/phergie-reminders
 
-[Phergie](http://github.com/phergie/phergie-irc-bot-react/) Phergie plugin to remind you when the pizza is done.
+[Phergie](http://github.com/phergie/phergie-irc-bot-react/) plugin to remind you when the pizza is done.
 
 [![Build Status](https://secure.travis-ci.org/sitedyno/phergie-reminders.png?branch=master)](http://travis-ci.org/sitedyno/phergie-reminders)
 
