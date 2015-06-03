@@ -544,7 +544,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
         extract($this->parseReminder($event));
         $params = $event->getCustomParams();
         if (!isset($params[2])) {
-            $queue->$command($source, "$nick: You need to supply the new reminder's name");
+            $queue->$command($source, "$nick: You need to supply the new reminder's name.");
             return;
         }
         if (isset($this->reminders[$nick][$name])) {
@@ -552,6 +552,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             $this->reminders[$nick][$newName] = $this->reminders[$nick][$name];
             unset($this->reminders[$nick][$name]);
             $this->saveReminders();
+            $queue->command($source, "$nick: $name has been renamed to $newName.");
         } else {
             $queue->$command($source, "$nick: I don't have a $name reminder for you.");
         }
@@ -573,8 +574,9 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             $message = implode(' ', $params);
             $this->reminders[$nick][$name]['message'] = $message;
             $this->saveReminders();
+            $queue->$command($source, "$nick: Your message has been added.");
         } else {
-            $queue->$command($source, "$nick: Please supply a message for your reminder");
+            $queue->$command($source, "$nick: Please supply a message for your reminder.");
         }
     }
 }
