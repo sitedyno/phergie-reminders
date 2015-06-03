@@ -552,7 +552,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             $this->reminders[$nick][$newName] = $this->reminders[$nick][$name];
             unset($this->reminders[$nick][$name]);
             $this->saveReminders();
-            $queue->command($source, "$nick: $name has been renamed to $newName.");
+            $queue->$command($source, "$nick: $name has been renamed to $newName.");
         } else {
             $queue->$command($source, "$nick: I don't have a $name reminder for you.");
         }
