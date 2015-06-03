@@ -33,7 +33,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
      *
      * @var array
      */
-    protected $activeTimers = [];
+    public $activeTimers = [];
 
     /**
      * Filename of the reminders cache
@@ -75,7 +75,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
      *
      * @var array
      */
-    protected $reminders = [];
+    public $reminders = [];
 
     /**
      * Accepts plugin configuration.
@@ -168,7 +168,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             '------------------------------------------------------------------',
             'Usage: reminder start [name]',
             'Usage: reminder [name]',
-            '[name] - The name of an existing reminder.',
+            '[name] - The name of an existing reminder',
             'Start a reminder',
             '------------------------------------------------------------------',
             'Usage: reminder cancel [name]',
@@ -177,9 +177,19 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             'Cancels a running reminder',
             '------------------------------------------------------------------',
             'Usage: reminder show [name]',
-            '[name] - The name of an existing reminder.',
+            '[name] - The name of an existing reminder',
             'Show the details of a reminder',
-            '------------------------------------------------------------------'
+            '------------------------------------------------------------------',
+            'Usage: reminder rename [current name] [new name]',
+            '[current name] - The current name of a reminder',
+            '[new name] - The new name of the reminder',
+            'Rename a reminder',
+            '------------------------------------------------------------------',
+            'Usage: reminder message [name] [message]',
+            '[name] - The name of an existing reminder',
+            '[message] - The message to use when the reminder ends',
+            'Sets the message to use when a reminder ends',
+            '------------------------------------------------------------------',
         ];
         $nick = $event->getNick();
         $command = 'irc' . $event->getCommand();
@@ -220,6 +230,12 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
                 break;
             case "show":
                 $this->showReminder($event, $queue);
+                break;
+            case "rename":
+                $this->renameReminder($event, $queue);
+                break;
+            case "message":
+                $this->setReminderMessage($event, $queue);
                 break;
             default:
                 extract($this->parseReminder($event));
@@ -383,7 +399,10 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
     public function sendReminder($queue, $reminder)
     {
         extract($reminder);
-        $queue->$command($source, "$nick This is me reminding you about $name");
+        if (!isset($message)) {
+            $message = "$nick This is me reminding you about $name";
+        }
+        $queue->$command($source, $message);
     }
 
     /**
@@ -397,6 +416,7 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
         extract($this->parseReminder($event));
         if (isset($this->activeTimers[$nick][$name])) {
             $this->loop->cancelTimer($this->activeTimers[$nick][$name]);
+            unset($this->activeTimers[$nick][$name]);
             $queue->$command($source, "$nick: The $name reminder has been cancelled.");
         } else {
             $queue->$command($source, "$nick: That reminder isn't running.");
@@ -510,6 +530,51 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
             );
         } else {
             $queue->$command($source, "$nick: I don't have a $name reminder for you.");
+        }
+    }
+
+    /**
+     * Rename a reminder
+     *
+     * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
+     * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+     */
+    public function renameReminder(Event $event, Queue $queue)
+    {
+        extract($this->parseReminder($event));
+        $params = $event->getCustomParams();
+        if (!isset($params[2])) {
+            $queue->$command($source, "$nick: You need to supply the new reminder's name");
+            return;
+        }
+        if (isset($this->reminders[$nick][$name])) {
+            $newName = $params[2];
+            $this->reminders[$nick][$newName] = $this->reminders[$nick][$name];
+            unset($this->reminders[$nick][$name]);
+            $this->saveReminders();
+        } else {
+            $queue->$command($source, "$nick: I don't have a $name reminder for you.");
+        }
+    }
+
+    /**
+     * Sets the message a reminder displays when a reminder ends
+     *
+     * @param \Phergie\Irc\Plugin\React\Command\CommandEvent $event
+     * @param \Phergie\Irc\Bot\React\EventQueueInterface $queue
+     */
+    public function setReminderMessage(Event $event, Queue $queue)
+    {
+        extract($this->parseReminder($event));
+        $params = $event->getCustomParams();
+        unset($params[0]);
+        unset($params[1]);
+        if (!empty($params)) {
+            $message = implode(' ', $params);
+            $this->reminders[$nick][$name]['message'] = $message;
+            $this->saveReminders();
+        } else {
+            $queue->$command($source, "$nick: Please supply a message for your reminder");
         }
     }
 }
