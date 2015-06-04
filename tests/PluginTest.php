@@ -27,8 +27,8 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     public $defaults = [
         'nick' => 'somenick',
         'source' => '#somechan',
-        'command' => 'PRIVMSG',
-        'queueCommand' => 'ircPRIVMSG'
+        'command' => 'Privmsg',
+        'queueCommand' => 'ircPrivmsg'
     ];
 
     /**
@@ -174,7 +174,6 @@ class PluginTest extends \PHPUnit_Framework_TestCase
         $event = $this->getEvent(['start', $name]);
         $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
         $this->assertTrue(empty($this->plugin->activeTimers));
-        Phake::reset($this->loop);
         $this->plugin->startReminder($event, $queue);
         $this->assertTrue(array_key_exists($name, $this->plugin->activeTimers[$nick]));
         Phake::verify($this->loop)->addTimer(1, Phake::ignoreRemaining());
@@ -195,6 +194,168 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test sending a reminder
+     * Plugin::sendReminder()
+     */
+    public function testSendReminder()
+    {
+        $reminder = $this->defaults;
+        $reminder['name'] = 'reminder1';
+        $reminder['command'] = $reminder['queueCommand'];
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->sendReminder($queue, $reminder);
+        extract($reminder);
+        Phake::verify($queue)->$queueCommand($source, "$nick: This is me reminding you about $name");
+
+    }
+
+    /**
+     * Test sending a reminder w/ custom message
+     * Plugin::sendReminder()
+     */
+    public function testSendReminderCustom()
+    {
+        $reminder = $this->defaults;
+        $reminder['name'] = 'reminder1';
+        $reminder['command'] = $reminder['queueCommand'];
+        $reminder['message'] = 'custom message';
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->sendReminder($queue, $reminder);
+        extract($reminder);
+        Phake::verify($queue)->$queueCommand($source, $message);
+    }
+
+    /**
+     * Test cancelling a reminder
+     * Plugin::cancelReminder()
+     */
+    public function testCancelReminder()
+    {
+        extract($this->defaults);
+        $name = 'reminder1';
+        $event = $this->getEvent(['start', $name]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->assertTrue(empty($this->plugin->activeTimers));
+        $this->plugin->startReminder($event, $queue);
+        $this->assertTrue(array_key_exists($name, $this->plugin->activeTimers[$nick]));
+        $event = $this->getEvent(['cancel', $name]);
+        $this->plugin->cancelReminder($event, $queue);
+        $this->assertFalse(isset($this->plugin->activeTimers[$nick][$name]));
+    }
+
+    /**
+     * Test cancelling a reminder that isn't running
+     * Plugin::cancelReminder()
+     */
+    public function testCancelReminderNotRunning()
+    {
+        extract($this->defaults);
+        $name = 'reminder1';
+        $event = $this->getEvent(['cancel', $name]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->assertTrue(empty($this->plugin->activeTimers));
+        $this->plugin->cancelReminder($event, $queue);
+        Phake::verify($queue)->$queueCommand($source, "$nick: That reminder isn't running.");
+    }
+
+    /**
+     * Test editing a reminder
+     * Plugin::editReminder()
+     */
+    public function testEditReminder()
+    {
+        extract($this->defaults);
+        $name = 'reminder1';
+        $event = $this->getEvent(['edit', $name, '2', 'seconds']);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->editReminder($event, $queue);
+        $this->assertEquals(2, $this->plugin->reminders[$nick][$name]['seconds']);
+    }
+
+    /**
+     * Test deleting a reminder
+     * Plugin::deleteReminder()
+     */
+    public function testDeleteReminder()
+    {
+        extract($this->defaults);
+        $name = 'reminderToDelete';
+        $event = $this->getEvent(['add', $name, '1', 'second']);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->addReminder($event, $queue);
+        $this->assertTrue(isset($this->plugin->reminders[$nick][$name]));
+        $event = $this->getEvent(['delete', $name]);
+        $this->plugin->deleteReminder($event, $queue);
+        $this->assertFalse(isset($this->plugin->reminders[$nick][$name]));
+    }
+
+    /**
+     * Test deleting a reminder that doesn't exist
+     * Plugin::deleteReminder()
+     */
+    public function testDeleteReminderNonExistent()
+    {
+        extract($this->defaults);
+        $name = 'nonexistentreminder';
+        $event = $this->getEvent(['delete', $name]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->deleteReminder($event, $queue);
+        Phake::verify($queue)->$queueCommand($source, "$nick: I don't have a $name reminder for you.");
+    }
+
+    /**
+     * Test showing a reminder
+     * Plugin::showReminder()
+     */
+    public function testShowReminder()
+    {
+        extract($this->defaults);
+        $name = 'reminder1';
+        $event = $this->getEvent(['show', $name]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->showReminder($event, $queue);
+        extract($this->plugin->reminders[$nick][$name]);
+        Phake::verify($queue)->$queueCommand($source, "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds");
+    }
+
+    /**
+     * Test showing a reminder w/ custom message
+     * Plugin::showReminder()
+     */
+    public function testShowReminderCustomMessage()
+    {
+        extract($this->defaults);
+        $name = 'remindertodelete';
+        $message = 'custom message';
+        $event = $this->getEvent(['add', $name, '1', 'second']);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->addReminder($event, $queue);
+        $event = $this->getEvent(['message', $name, $message]);
+        $this->plugin->setReminderMessage($event, $queue);
+        $event = $this->getEvent(['show', $name]);
+        Phake::reset($queue);
+        $this->plugin->showReminder($event, $queue);
+        extract($this->plugin->reminders[$nick][$name]);
+        Phake::verify($queue)->$queueCommand($source, "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds, message: $message");
+        $event = $this->getEvent(['delete', $name]);
+        $this->plugin->deleteReminder($event, $queue);
+    }
+
+    /**
+     * Test showing a nonexistent reminder
+     * Plugin::showReminder()
+     */
+    public function testShowReminderNonExistent()
+    {
+        extract($this->defaults);
+        $name = 'nonexistentreminder';
+        $event = $this->getEvent(['show', $name]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->showReminder($event, $queue);
+        Phake::verify($queue)->$queueCommand($source, "$nick: I don't have a $name reminder for you.");
+    }
+
+    /**
      * Test renaming a reminder
      * Plugin::renameReminder()
      */
@@ -208,6 +369,8 @@ class PluginTest extends \PHPUnit_Framework_TestCase
         $this->plugin->renameReminder($event, $queue);
         $this->assertFalse(isset($this->plugin->reminders[$nick][$name]));
         $this->assertTrue(isset($this->plugin->reminders[$nick][$newName]));
+        $event = $this->getEvent(['rename', $newName, $name]);
+        $this->plugin->renameReminder($event, $queue);
     }
 
     /**
@@ -217,11 +380,58 @@ class PluginTest extends \PHPUnit_Framework_TestCase
     public function testSetReminderMessage()
     {
         extract($this->defaults);
-        $name = 'newReminder1';
+        $name = 'reminder1';
         $event = $this->getEvent(['message', $name, 'custom', 'message']);
         $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
         $this->plugin->setReminderMessage($event, $queue);
         $this->assertTrue(isset($this->plugin->reminders[$nick][$name]['message']));
         $this->assertEquals('custom message', $this->plugin->reminders[$nick][$name]['message']);
     }
+
+    /**
+     * Test listing reminders
+     * Plugin::listReminders()
+     */
+    public function testListReminders()
+    {
+        extract($this->defaults);
+        $event = $this->getEvent(['list']);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->listReminders($event, $queue);
+        Phake::verify($queue)->$queueCommand($source, "End of $nick's reminder list");
+    }
+
+    /**
+     * Test listing reminders when a nick doesn't have reminders
+     * Plugin::listReminders()
+     */
+    public function testListRemindersNoReminders()
+    {
+        extract($this->defaults);
+        $nick = 'someothernick';
+        $event = $this->getEvent(['list'], ['nick' => $nick]);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $this->plugin->listReminders($event, $queue);
+        Phake::verify($queue)->$queueCommand($source, "$nick I don't have any reminders for you");
+    }
+
+    /**
+     * Test listing reminders with maxListSize
+     * Plugin::listReminders()
+     */
+    public function testListRemindersMaxListSize()
+    {
+        extract($this->defaults);
+        $name = 'reminder2';
+        $plugin = new Plugin(['maxListSize' => 1]);
+        $loop = Phake::mock('\React\EventLoop\LoopInterface');
+        $plugin->setLoop($loop);
+        $event = $this->getEvent(['add', $name, '3', 'seconds']);
+        $queue = Phake::mock('\Phergie\Irc\Bot\React\EventQueueInterface');
+        $plugin->addReminder($event, $queue);
+        $event = $this->getEvent(['list']);
+        $plugin->listReminders($event, $queue);
+        Phake::verify($queue)->$queueCommand($nick, "End of $nick's reminder list");
+    }
+
 }
