@@ -525,10 +525,11 @@ class Plugin extends AbstractPlugin implements LoopAwareInterface
         if (isset($this->reminders[$nick][$name])) {
             extract($this->reminders[$nick][$name]);
             $source = $event->getSource();
-            $queue->$command(
-                $source,
-                "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds"
-            );
+            $reply = "$nick - name: $name, time: $time, source: $source, command: $command, seconds: $seconds";
+            if (isset($message)) {
+                $reply .= ", message: $message";
+            }
+            $queue->$command($source, $reply);
         } else {
             $queue->$command($source, "$nick: I don't have a $name reminder for you.");
         }
