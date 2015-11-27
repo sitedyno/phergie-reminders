@@ -8,14 +8,6 @@
 
 The recommended method of installation is [through composer](http://getcomposer.org).
 
-```JSON
-{
-    "require": {
-        "sitedyno/phergie-reminders": "dev-master"
-    }
-}
-```
-or
 ```
 composer require sitedyno/phergie-reminders
 ```
