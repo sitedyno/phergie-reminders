@@ -18,6 +18,7 @@
         "source": "https://github.com/sitedyno/phergie-reminders"
     },
     "require": {
+        "php": ">=5.5",
         "phergie/phergie-irc-bot-react": "^2",
         "phergie/phergie-irc-plugin-react-command": "^2"
 
